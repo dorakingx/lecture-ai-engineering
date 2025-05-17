@@ -195,7 +195,11 @@ def test_model_performance_comparison(train_model):
         past_inference_time = time.time() - start_time
 
         # 精度と推論時間を比較
-        assert current_accuracy >= past_accuracy, f"現在のモデルの精度が過去のモデルより低いです: {current_accuracy} < {past_accuracy}"
-        assert current_inference_time <= past_inference_time, f"現在のモデルの推論時間が過去のモデルより長いです: {current_inference_time} > {past_inference_time}"
+        assert (
+            current_accuracy >= past_accuracy
+        ), f"現在のモデルの精度が過去のモデルより低いです: {current_accuracy} < {past_accuracy}"
+        assert (
+            current_inference_time <= past_inference_time
+        ), f"現在のモデルの推論時間が過去のモデルより長いです: {current_inference_time} > {past_inference_time}"
     else:
         pytest.skip("過去のモデルが存在しないためスキップします")
