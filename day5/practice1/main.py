@@ -10,6 +10,7 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score
 from sklearn.preprocessing import LabelEncoder
 from mlflow.models.signature import infer_signature
+import time
 
 
 # データ準備
@@ -76,6 +77,14 @@ def log_model(model, accuracy, params):
         print(f"モデルのログ記録値 \naccuracy: {accuracy}\nparams: {params}")
 
 
+def evaluate_inference_time_and_accuracy(model, X_test, y_test):
+    start_time = time.time()
+    predictions = model.predict(X_test)
+    inference_time = time.time() - start_time
+    accuracy = accuracy_score(y_test, predictions)
+    return inference_time, accuracy
+
+
 # メイン処理
 if __name__ == "__main__":
     # ランダム要素の設定
@@ -121,3 +130,21 @@ if __name__ == "__main__":
     with open(model_path, "wb") as f:
         pickle.dump(model, f)
     print(f"モデルを {model_path} に保存しました")
+
+    # モデルの推論精度と時間を評価
+    inference_time, current_accuracy = evaluate_inference_time_and_accuracy(model, X_test, y_test)
+    mlflow.log_metric("inference_time", inference_time)
+    mlflow.log_metric("current_accuracy", current_accuracy)
+
+    # 過去バージョンのモデルと比較
+    past_model_path = os.path.join(model_dir, "titanic_model.pkl")
+    if os.path.exists(past_model_path):
+        with open(past_model_path, "rb") as f:
+            past_model = pickle.load(f)
+        past_inference_time, past_accuracy = evaluate_inference_time_and_accuracy(past_model, X_test, y_test)
+        mlflow.log_metric("past_inference_time", past_inference_time)
+        mlflow.log_metric("past_accuracy", past_accuracy)
+        print(f"過去モデルの精度: {past_accuracy}, 推論時間: {past_inference_time}")
+        print(f"現在モデルの精度: {current_accuracy}, 推論時間: {inference_time}")
+    else:
+        print("過去モデルが見つかりませんでした。")

@@ -171,3 +171,31 @@ def test_model_reproducibility(sample_data, preprocessor):
     assert np.array_equal(
         predictions1, predictions2
     ), "モデルの予測結果に再現性がありません"
+
+
+def test_model_performance_comparison(train_model):
+    """現在のモデルと過去のモデルの性能を比較"""
+    model, X_test, y_test = train_model
+
+    # 現在のモデルの精度と推論時間を計算
+    current_y_pred = model.predict(X_test)
+    current_accuracy = accuracy_score(y_test, current_y_pred)
+    start_time = time.time()
+    model.predict(X_test)
+    current_inference_time = time.time() - start_time
+
+    # 過去のモデルをロードして比較
+    if os.path.exists(MODEL_PATH):
+        with open(MODEL_PATH, "rb") as f:
+            past_model = pickle.load(f)
+        past_y_pred = past_model.predict(X_test)
+        past_accuracy = accuracy_score(y_test, past_y_pred)
+        start_time = time.time()
+        past_model.predict(X_test)
+        past_inference_time = time.time() - start_time
+
+        # 精度と推論時間を比較
+        assert current_accuracy >= past_accuracy, f"現在のモデルの精度が過去のモデルより低いです: {current_accuracy} < {past_accuracy}"
+        assert current_inference_time <= past_inference_time, f"現在のモデルの推論時間が過去のモデルより長いです: {current_inference_time} > {past_inference_time}"
+    else:
+        pytest.skip("過去のモデルが存在しないためスキップします")
